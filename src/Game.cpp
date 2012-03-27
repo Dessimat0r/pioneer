@@ -457,27 +457,14 @@ void Game::SwitchToNormalSpace()
 				Body *target_body = m_space->FindBodyForPath(&sdest);
 				double dist_to_target = cloud->GetPositionRelTo(target_body).Length();
 				double half_dist_to_target = dist_to_target / 2.0;
-				double accel = -(ship->GetShipType().linThrust[ShipType::THRUSTER_FORWARD] / ship->GetMass());
-				double travel_time = Pi::game->GetTime() - cloud->GetDueDate();
-
-				// I can't help but feel some actual math would do better here
-				double speed = 0;
-				double dist = 0;
-				while (travel_time > 0 && dist <= half_dist_to_target) {
-					speed += accel;
-					dist += speed;
-					travel_time--;
-				}
-				while (travel_time > 0 && dist < dist_to_target) {
-					speed -= accel;
-					dist += speed;
-					travel_time--;
-				}
+				double accel = (1.0 / ship->GetMass()) * ship->GetShipType().linThrust[ShipType::THRUSTER_FORWARD];
+				double travel_time = sqrt(half_dist_to_target / accel) * 2.0;
 
 				if (travel_time <= 0) {
+					// XXX: what was dist here from original code?
 					vector3d pos =
 						target_body->GetPositionRelTo(m_space->GetRootFrame()) +
-						cloud->GetPositionRelTo(target_body).Normalized() * (dist_to_target - dist);
+						cloud->GetPositionRelTo(target_body).Normalized() * (dist_to_target /*- dist*/);
 					ship->SetPosition(pos);
 				}
 
