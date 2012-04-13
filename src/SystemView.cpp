@@ -8,6 +8,7 @@
 #include "Player.h"
 #include "FloatComparison.h"
 #include "Game.h"
+#include "Star.h"
 #include "graphics/Material.h"
 #include "graphics/Renderer.h"
 
@@ -170,27 +171,37 @@ void SystemView::PutLabel(SBody *b, vector3d offset)
 #define ROUGH_SIZE_OF_TURD	10.0
 
 matrix4x4f s_invRot;
+matrix4x4d s_invRotd;
 
 void SystemView::PutBody(SBody *b, vector3d offset)
 {
 	if (b->type == SBody::TYPE_STARPORT_SURFACE) return;
 	if (b->type != SBody::TYPE_GRAVPOINT) {
-		glGetFloatv (GL_MODELVIEW_MATRIX, &s_invRot[0]);
-		s_invRot[12] = s_invRot[13] = s_invRot[14] = 0;
-		s_invRot = s_invRot.InverseOf();
+		if (b->type >= SBody::TYPE_BROWN_DWARF && b->type <= SBody::TYPE_STAR_SM_BH) {
+			Star star(b);
+			
+			glGetDoublev(GL_MODELVIEW_MATRIX, &s_invRotd[0]);
+			s_invRotd[12] = s_invRotd[13] = s_invRotd[14] = 0;
+			s_invRotd = s_invRotd.InverseOf();
+			star.Render(m_renderer, vector3d(0,0,0), matrix4x4d::Identity());
+		} else {
+			glGetFloatv (GL_MODELVIEW_MATRIX, &s_invRot[0]);
+			s_invRot[12] = s_invRot[13] = s_invRot[14] = 0;
+			s_invRot = s_invRot.InverseOf();
 
-		// Draw a filled circle
-		VertexArray va(ATTRIB_POSITION);
-		Material mat;
-		mat.unlit = true;
-		mat.diffuse = Color(1.f);
-		const double radius = b->GetRadius() * m_zoom;
-		const vector3f offsetf(offset);
-		for (float ang=0; ang<2.0f*float(M_PI); ang+=float(M_PI)*0.05f) {
-			vector3f p = offsetf + s_invRot * vector3f(radius*sin(ang), -radius*cos(ang), 0);
-			va.Add(p);
+			// Draw a filled circle
+			VertexArray va(ATTRIB_POSITION);
+			Material mat;
+			mat.unlit = true;
+			mat.diffuse = Color(1.f);
+			const double radius = b->GetRadius() * m_zoom;
+			const vector3f offsetf(offset);
+			for (float ang=0; ang<2.0f*float(M_PI); ang+=float(M_PI)*0.05f) {
+				vector3f p = offsetf + s_invRot * vector3f(radius*sin(ang), -radius*cos(ang), 0);
+				va.Add(p);
+			}
+			m_renderer->DrawTriangles(&va, &mat, TRIANGLE_FAN);
 		}
-		m_renderer->DrawTriangles(&va, &mat, TRIANGLE_FAN);
 
 		PutLabel(b, offset);
 	}

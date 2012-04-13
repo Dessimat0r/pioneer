@@ -4,7 +4,7 @@
 #include "libs.h"
 #include "gui/Gui.h"
 #include "View.h"
-#include "View.h"
+#include "Star.h"
 #include <vector>
 
 class StarSystem;
@@ -15,6 +15,7 @@ class SystemInfoView: public View {
 public:
 	SystemInfoView();
 	virtual void Update();
+	virtual void Draw();
 	virtual void Draw3D();
 	virtual void OnSwitchTo();
 	void NextPage();
@@ -46,6 +47,8 @@ private:
 	bool m_refresh;
 	//map is not enough to associate icons as each tab has their own
 	std::vector<std::pair<std::string, BodyIcon*> > m_bodyIcons;
+	
+	Star *m_star;
 };
 
 #endif /* _SYSTEMINFOVIEW_H */

@@ -16,6 +16,9 @@ SystemInfoView::SystemInfoView()
 {
 	SetTransparency(true);
 	m_refresh = false;
+	RefCountedPtr<StarSystem> ss = StarSystem::GetCached(SystemPath(0, 0, 0, 0));
+	SBody *body = ss->GetBodyByPath(SystemPath(0, 0, 0, 0, 0));
+	m_star = new Star(body);
 }
 
 void SystemInfoView::OnBodySelected(SBody *b)
@@ -198,6 +201,10 @@ void SystemInfoView::PutBodies(SBody *body, Gui::Fixed *container, int dir, floa
 		myPos[0] += (dir ? prevSize*0.5 - size[0]*0.5 : 0);
 		myPos[1] += (!dir ? prevSize*0.5 - size[1]*0.5 : 0);
 		container->Add(ib, myPos[0], myPos[1]);
+		char buf[30];
+		SystemPath path = body->path;
+		snprintf(buf, 30, "x:%d,y:%d,z:%d,si:%d,bi:%d", path.sectorX, path.sectorY, path.sectorZ, path.systemIndex, path.bodyIndex);
+		container->Add(new Gui::Label(buf), myPos[0] + 5, myPos[1] + 5);
 
 		if (body->GetSuperType() != SBody::SUPERTYPE_STARPORT) majorBodies++;
 		pos[dir] += size[dir];
@@ -383,9 +390,18 @@ void SystemInfoView::SystemChanged(const SystemPath &path)
 	ShowAll();
 }
 
+void SystemInfoView::Draw() {
+	View::Draw();
+}
+
 void SystemInfoView::Draw3D()
 {
-	m_renderer->SetTransform(matrix4x4f::Identity());
+	matrix4x4f mat = matrix4x4f::Identity();
+	mat.Scale(-500, -500, -500);
+	m_renderer->SetTransform(mat);
+	m_star->Render(m_renderer, vector3d(1.0, 1.0, 0.0), matrix4x4d::Identity());
+	mat = matrix4x4f::Identity();
+	m_renderer->SetTransform(mat);
 	m_renderer->ClearScreen();
 }
 
